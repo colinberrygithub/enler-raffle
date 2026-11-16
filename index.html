@@ -74,6 +74,17 @@
   .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .04em; }
   button.mini { margin-left: 6px; font: 600 13px/1 'Public Sans', sans-serif; padding: 5px 9px; border-radius: 6px; border: 1.5px solid var(--red); background: transparent; color: var(--red); cursor: pointer; }
   @media (max-width: 420px) { dl.bank { grid-template-columns: 1fr; gap: 2px; } dl.bank dd { margin-bottom: 8px; } }
+  form.entry { display: grid; gap: 14px; margin-top: 12px; }
+  form.entry label { display: grid; gap: 6px; font-weight: 600; }
+  form.entry input:not([type=radio]), .fallback textarea { width: 100%; font: 17px/1.3 'Public Sans', sans-serif; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); }
+  form.entry input:focus, .fallback textarea:focus { outline: none; border-color: var(--red); }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+  legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+  label.opt { display: flex !important; align-items: center; gap: 10px; font-weight: 500 !important; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; cursor: pointer; }
+  label.opt input { width: 20px; height: 20px; accent-color: var(--red); }
+  .err { color: var(--red); font-weight: 600; min-height: 0; margin: 0; }
+  .fallback { margin-top: 16px; }
+  .fallback textarea { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 15px; }
   details { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 12px; }
   summary { cursor: pointer; font-weight: 700; }
   details ul { margin: 10px 0 0; padding-left: 20px; }
@@ -134,14 +145,29 @@
     </li>
     <li>
       <h2>Send your details</h2>
-      <p>Fill in the short form: your name, mobile number, email, how much you paid and your payment reference. We need these to send your numbers and to contact the winner.</p>
-      <div class="btns">
-        <a class="btn" id="form" href="#" target="_blank" rel="noopener">Open the entry form</a>
+      <p>Fill this in after you’ve paid. Tapping the button opens your email app with your entry written out: just press send.</p>
+      <form id="entry" class="entry" novalidate>
+        <label>Full name<input name="name" autocomplete="name" required></label>
+        <label>Mobile number<input name="mobile" type="tel" autocomplete="tel" inputmode="tel" required></label>
+        <label>Email <span class="soft">(optional, for your numbers)</span><input name="email" type="email" autocomplete="email"></label>
+        <fieldset>
+          <legend>How much did you pay?</legend>
+          <label class="opt"><input type="radio" name="paid" value="£5 (1 number)" required> £5 · 1 number</label>
+          <label class="opt"><input type="radio" name="paid" value="£10 (3 numbers)"> £10 · 3 numbers</label>
+        </fieldset>
+        <p class="soft">Payment reference: <b class="mono" id="ref2">ENLER-·····</b></p>
+        <p class="err" id="err" role="alert"></p>
+        <div class="btns"><button class="btn" type="submit">Send my details</button></div>
+      </form>
+      <div class="fallback" id="fallback" hidden>
+        <p><b>Email app didn’t open?</b> Copy this and email it to <a id="toaddr" href="#"></a>:</p>
+        <textarea id="mailtext" rows="7" readonly></textarea>
+        <div class="btns"><button class="btn ghost" type="button" id="copymail">Copy entry</button></div>
       </div>
     </li>
     <li>
       <h2>Get your numbers</h2>
-      <p>Once your payment is confirmed, your 6-digit draw numbers are assigned: <b>1 number for £5, 3 numbers for £10</b>. We email them to you. Check your spam folder if they haven’t arrived within a day of paying.</p>
+      <p>Once your payment is confirmed, your 6-digit draw numbers are assigned: <b>1 number for £5, 3 numbers for £10</b>. We send them to you by email, or by text if you didn’t give an email.</p>
     </li>
   </ol>
 
@@ -171,8 +197,7 @@
 <script>
   // Fill these in before going live.
   const CONFIG = {
-    formUrl: "",           // Google Form link
-    formRefEntry: "",      // optional: the form's entry id for the reference question, e.g. "entry.123456789"
+    entryEmail: "",        // where entry emails go
     closesAt: "2026-12-13T23:59:59+00:00"
   };
 
@@ -196,20 +221,41 @@
     catch (e) { msg.textContent = "Select it and copy"; }
   });
 
-  function setLink(id, url) {
-    const a = document.getElementById(id);
-    if (url) { a.href = url; } else { a.setAttribute("aria-disabled", "true"); a.textContent += " (link coming soon)"; }
-  }
+  document.getElementById("ref2").textContent = ref;
+
+  // Step 2: build the entry email. The block format is what raffle.py import-mail reads back.
+  const entry = document.getElementById("entry");
+  entry.addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = new FormData(entry);
+    const name = (f.get("name") || "").trim(), mobile = (f.get("mobile") || "").trim();
+    const email = (f.get("email") || "").trim(), paid = f.get("paid");
+    const err = document.getElementById("err");
+    if (!name) { err.textContent = "Please enter your name."; return; }
+    if ((mobile.match(/\d/g) || []).length < 10) { err.textContent = "Please enter your mobile number."; return; }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = "That email doesn’t look right."; return; }
+    if (!paid) { err.textContent = "Please choose how much you paid."; return; }
+    if (!CONFIG.entryEmail) { err.textContent = "Entries open soon: the email address isn’t set up yet."; return; }
+    err.textContent = "";
+    const subject = "Enler Draw entry " + ref;
+    const body = ["ENLER DRAW ENTRY", "Reference: " + ref, "Name: " + name, "Mobile: " + mobile,
+                  "Email: " + (email || "-"), "Paid: " + paid, "END"].join("\n");
+    document.getElementById("mailtext").value = "Subject: " + subject + "\n\n" + body;
+    const to = document.getElementById("toaddr");
+    to.textContent = CONFIG.entryEmail; to.href = "mailto:" + CONFIG.entryEmail;
+    document.getElementById("fallback").hidden = false;
+    location.href = "mailto:" + CONFIG.entryEmail + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  });
+  document.getElementById("copymail").addEventListener("click", async e => {
+    try { await navigator.clipboard.writeText(document.getElementById("mailtext").value); e.target.textContent = "Copied"; }
+    catch (x) { document.getElementById("mailtext").select(); }
+  });
+
   document.querySelectorAll("button.mini").forEach(b => b.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; }
     catch (e) { b.textContent = "Copy failed"; }
     setTimeout(() => { b.textContent = "Copy"; }, 2000);
   }));
-  let form = CONFIG.formUrl;
-  if (form && CONFIG.formRefEntry) {
-    form += (form.includes("?") ? "&" : "?") + "usp=pp_url&" + encodeURIComponent(CONFIG.formRefEntry) + "=" + encodeURIComponent(ref);
-  }
-  setLink("form", form);
 
   const closes = new Date(CONFIG.closesAt);
   function tick() {
