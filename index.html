@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enler Christmas Draw</title>
+<meta name="description" content="Win two tickets to Nick Ball v Anto Cacace, world title fight in Belfast. £5 for 1 number, £10 for 3.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --bg: #F6F1E7;
+    --card: #FFFCF6;
+    --ink: #1C1B19;
+    --soft: #55514A;
+    --red: #9E1B1B;
+    --red-dark: #7A1414;
+    --gold: #C9962B;
+    --line: #E3DACA;
+    --ok: #1F6B45;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151413; --card: #1F1D1B; --ink: #F3EEE4; --soft: #BDB5A8;
+      --red: #E0574C; --red-dark: #C8463C; --gold: #E2B34F; --line: #34302B; --ok: #6CC594;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151413; --card: #1F1D1B; --ink: #F3EEE4; --soft: #BDB5A8;
+    --red: #E0574C; --red-dark: #C8463C; --gold: #E2B34F; --line: #34302B; --ok: #6CC594;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 'Public Sans', system-ui, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+
+  header.hero { background: #7A1414; color: #FFF6E8; padding: 48px 16px 56px; text-align: center; position: relative; overflow: hidden; }
+  header.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 6px; background: repeating-linear-gradient(90deg, #C9962B 0 18px, #FFF6E8 18px 36px); }
+  .club { font: 600 14px/1 'Public Sans', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: #F2D79A; margin: 0 0 14px; }
+  h1 { font: 700 clamp(40px, 9vw, 72px)/1 'Oswald', sans-serif; letter-spacing: .01em; margin: 0 0 18px; text-transform: uppercase; }
+  .prize { font: 500 clamp(20px, 4.4vw, 28px)/1.25 'Oswald', sans-serif; margin: 0 auto 10px; max-width: 620px; }
+  .prize b { color: #F2D79A; font-weight: 700; }
+  .sub { margin: 0; color: #F6E6CF; }
+  .countdown { display: inline-block; margin-top: 22px; padding: 8px 16px; border: 2px solid #F2D79A; border-radius: 999px; font-weight: 600; font-size: 15px; }
+
+  .price { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 28px 0 8px; }
+  .tile { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 18px; text-align: center; }
+  .tile .amt { font: 700 40px/1 'Oswald', sans-serif; color: var(--red); }
+  .tile .num { font-weight: 600; margin-top: 6px; }
+  .tile.best { border-color: var(--gold); }
+  .tile .tag { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .08em; }
+
+  .warn { background: var(--card); border-left: 5px solid var(--red); border-radius: 8px; padding: 14px 16px; margin: 24px 0; font-weight: 600; }
+
+  ol.steps { list-style: none; padding: 0; margin: 0; counter-reset: step; display: grid; gap: 16px; }
+  ol.steps > li { counter-increment: step; background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 22px 20px 22px 76px; position: relative; }
+  ol.steps > li::before { content: counter(step); position: absolute; left: 20px; top: 20px; width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #FFF6E8; font: 700 22px/40px 'Oswald', sans-serif; text-align: center; }
+  h2 { font: 700 24px/1.2 'Oswald', sans-serif; text-transform: uppercase; margin: 2px 0 8px; letter-spacing: .02em; }
+  p { margin: 0 0 12px; }
+  .soft { color: var(--soft); }
+
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+  a.btn, button.btn { display: inline-block; text-decoration: none; border: 0; cursor: pointer; background: var(--red); color: #FFF6E8; font: 700 17px/1 'Public Sans', sans-serif; padding: 15px 20px; border-radius: 10px; }
+  a.btn:hover, button.btn:hover { background: var(--red-dark); }
+  a.btn.ghost, button.btn.ghost { background: transparent; color: var(--red); border: 2px solid var(--red); padding: 13px 18px; }
+  a.btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+
+  .ref { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
+  .ref code { font: 700 24px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .06em; background: var(--bg); border: 2px dashed var(--gold); border-radius: 10px; padding: 10px 14px; }
+  .copied { color: var(--ok); font-weight: 600; font-size: 15px; min-height: 1em; }
+
+  details { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 12px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details ul { margin: 10px 0 0; padding-left: 20px; }
+  details li { margin-bottom: 6px; }
+  .section-title { font: 700 22px/1.2 'Oswald', sans-serif; text-transform: uppercase; margin: 36px 0 4px; }
+
+  .closed { display: none; background: var(--card); border: 2px solid var(--red); border-radius: 16px; padding: 22px; text-align: center; margin-top: 24px; }
+  body.is-closed .closed { display: block; }
+  body.is-closed ol.steps, body.is-closed .warn { opacity: .4; pointer-events: none; }
+
+  footer { margin-top: 40px; font-size: 14px; color: var(--soft); text-align: center; }
+  @media (max-width: 420px) {
+    ol.steps > li { padding: 70px 16px 20px; }
+    ol.steps > li::before { left: 16px; top: 16px; }
+    .tile .amt { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <p class="club">Enler · Christmas Draw</p>
+  <h1>Win two fight tickets</h1>
+  <p class="prize"><b>Nick Ball v Anto Cacace</b><br>World title fight · Belfast</p>
+  <p class="sub">Entries close Sunday 13 December at 11:59pm. Draw on Monday 14 December.</p>
+  <span class="countdown" id="countdown">Entries open</span>
+</header>
+
+<main class="wrap">
+  <div class="price" aria-label="Prices">
+    <div class="tile"><div class="amt">£5</div><div class="num">1 number</div></div>
+    <div class="tile best"><div class="amt">£10</div><div class="num">3 numbers</div><span class="tag">Best value</span></div>
+  </div>
+
+  <div class="closed" role="status">
+    <h2>Entries are closed</h2>
+    <p>Thanks to everyone who entered. The draw takes place on Monday 14 December.</p>
+  </div>
+
+  <p class="warn">Complete all three steps to be entered. If you pay but don’t send your details, or send your details without paying, you are not in the draw.</p>
+
+  <ol class="steps">
+    <li>
+      <h2>Pay</h2>
+      <p>Choose £5 for 1 number or £10 for 3 numbers. Use this as your payment reference so we can match your payment to you:</p>
+      <div class="ref">
+        <code id="ref">ENLER-·····</code>
+        <button class="btn ghost" type="button" id="copy">Copy</button>
+        <span class="copied" id="copied" aria-live="polite"></span>
+      </div>
+      <div class="btns">
+        <a class="btn" id="pay5" href="#" target="_blank" rel="noopener">Pay £5 · 1 number</a>
+        <a class="btn" id="pay10" href="#" target="_blank" rel="noopener">Pay £10 · 3 numbers</a>
+      </div>
+      <p class="soft" id="paynote">Keep this page open while you pay.</p>
+    </li>
+    <li>
+      <h2>Send your details</h2>
+      <p>Fill in the short form: your name, mobile number, email, how much you paid and your payment reference. We need these to send your numbers and to contact the winner.</p>
+      <div class="btns">
+        <a class="btn" id="form" href="#" target="_blank" rel="noopener">Open the entry form</a>
+      </div>
+    </li>
+    <li>
+      <h2>Get your numbers</h2>
+      <p>Once your payment is confirmed, your 6-digit draw numbers are assigned: <b>1 number for £5, 3 numbers for £10</b>. We email them to you. Check your spam folder if they haven’t arrived within a day of paying.</p>
+    </li>
+  </ol>
+
+  <p class="section-title">The small print</p>
+  <details>
+    <summary>How the draw works</summary>
+    <ul>
+      <li>Each number is a unique, randomly generated 6-digit number.</li>
+      <li>Numbers are only assigned after your payment has been received and matched to your details.</li>
+      <li>Entries close at 11:59pm on Sunday 13 December 2026. Payments or forms received after that are not entered and will be refunded.</li>
+      <li>The winning number is drawn at random on Monday 14 December 2026, and the winner is contacted by phone and email.</li>
+      <li>The prize is two tickets to Nick Ball v Anto Cacace in Belfast. There is no cash alternative.</li>
+      <li>There is no limit on how many numbers you can buy.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>Your details</summary>
+    <ul>
+      <li>Your name, mobile number and email are only used to run this draw: to send your numbers and to contact the winner.</li>
+      <li>They are kept privately by Enler, never shared or published, and deleted after the prize has been handed over.</li>
+    </ul>
+  </details>
+
+  <footer>Enler Christmas Draw · Questions? Ask a coach at the club.</footer>
+</main>
+
+<script>
+  // Fill these in before going live.
+  const CONFIG = {
+    payLink5: "",          // bank payment link for £5
+    payLink10: "",         // bank payment link for £10 (can be the same link as above)
+    formUrl: "",           // Google Form link
+    formRefEntry: "",      // optional: the form's entry id for the reference question, e.g. "entry.123456789"
+    closesAt: "2026-12-13T23:59:59+00:00"
+  };
+
+  const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  function newRef() {
+    const bytes = new Uint8Array(5);
+    crypto.getRandomValues(bytes);
+    return "ENLER-" + Array.from(bytes, b => ALPHABET[b % ALPHABET.length]).join("");
+  }
+  let ref = null;
+  try { ref = localStorage.getItem("enler-ref"); } catch (e) {}
+  if (!ref || !/^ENLER-[A-Z2-9]{5}$/.test(ref)) {
+    ref = newRef();
+    try { localStorage.setItem("enler-ref", ref); } catch (e) {}
+  }
+  document.getElementById("ref").textContent = ref;
+
+  document.getElementById("copy").addEventListener("click", async () => {
+    const msg = document.getElementById("copied");
+    try { await navigator.clipboard.writeText(ref); msg.textContent = "Copied"; }
+    catch (e) { msg.textContent = "Select it and copy"; }
+  });
+
+  function setLink(id, url) {
+    const a = document.getElementById(id);
+    if (url) { a.href = url; } else { a.setAttribute("aria-disabled", "true"); a.textContent += " (link coming soon)"; }
+  }
+  setLink("pay5", CONFIG.payLink5);
+  setLink("pay10", CONFIG.payLink10);
+  let form = CONFIG.formUrl;
+  if (form && CONFIG.formRefEntry) {
+    form += (form.includes("?") ? "&" : "?") + "usp=pp_url&" + encodeURIComponent(CONFIG.formRefEntry) + "=" + encodeURIComponent(ref);
+  }
+  setLink("form", form);
+
+  const closes = new Date(CONFIG.closesAt);
+  function tick() {
+    const left = closes - new Date();
+    const el = document.getElementById("countdown");
+    if (left <= 0) { document.body.classList.add("is-closed"); el.textContent = "Entries closed"; return; }
+    const d = Math.floor(left / 864e5), h = Math.floor(left / 36e5) % 24, m = Math.floor(left / 6e4) % 60;
+    el.textContent = d > 0 ? `Closes in ${d} day${d === 1 ? "" : "s"}, ${h} hr` : `Closes in ${h} hr ${m} min`;
+  }
+  tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>
