@@ -1,6 +1,6 @@
 # Enler Christmas Draw
 
-Public page for Enler's Christmas draw: two tickets to Nick Ball v Anto Cacace, world title fight, Belfast.
+Public page for Enler's Christmas draw: two tickets to Anto Cacace vs Nick Ball, world title fight, Belfast.
 £5 = 1 number, £10 = 3 numbers. Entries close Sunday 13 December 2026 at 11:59pm; draw Monday 14 December.
 
 Served by GitHub Pages from `index.html`. Payment is by bank transfer to the club account shown on the page. Before going live,
