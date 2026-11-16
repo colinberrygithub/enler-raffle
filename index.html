@@ -68,6 +68,12 @@
   .ref code { font: 700 24px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .06em; background: var(--bg); border: 2px dashed var(--gold); border-radius: 10px; padding: 10px 14px; }
   .copied { color: var(--ok); font-weight: 600; font-size: 15px; min-height: 1em; }
 
+  dl.bank { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 12px 0 16px; padding: 14px 16px; background: var(--bg); border-radius: 12px; }
+  dl.bank dt { color: var(--soft); }
+  dl.bank dd { margin: 0; font-weight: 700; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .04em; }
+  button.mini { margin-left: 6px; font: 600 13px/1 'Public Sans', sans-serif; padding: 5px 9px; border-radius: 6px; border: 1.5px solid var(--red); background: transparent; color: var(--red); cursor: pointer; }
+  @media (max-width: 420px) { dl.bank { grid-template-columns: 1fr; gap: 2px; } dl.bank dd { margin-bottom: 8px; } }
   details { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 12px; }
   summary { cursor: pointer; font-weight: 700; }
   details ul { margin: 10px 0 0; padding-left: 20px; }
@@ -110,18 +116,21 @@
 
   <ol class="steps">
     <li>
-      <h2>Pay</h2>
-      <p>Choose £5 for 1 number or £10 for 3 numbers. Use this as your payment reference so we can match your payment to you:</p>
+      <h2>Pay by bank transfer</h2>
+      <p>Send <b>£5 for 1 number</b> or <b>£10 for 3 numbers</b> from your banking app to:</p>
+      <dl class="bank">
+        <dt>Account name</dt><dd>Enler Amateur Boxing Club</dd>
+        <dt>Bank</dt><dd>The Co-operative Bank</dd>
+        <dt>Sort code</dt><dd><span class="mono">08-92-99</span> <button class="mini" type="button" data-copy="089299">Copy</button></dd>
+        <dt>Account number</dt><dd><span class="mono">67373301</span> <button class="mini" type="button" data-copy="67373301">Copy</button></dd>
+      </dl>
+      <p>Use this as your payment reference, exactly as shown, so we can match your payment to you:</p>
       <div class="ref">
         <code id="ref">ENLER-·····</code>
         <button class="btn ghost" type="button" id="copy">Copy</button>
         <span class="copied" id="copied" aria-live="polite"></span>
       </div>
-      <div class="btns">
-        <a class="btn" id="pay5" href="#" target="_blank" rel="noopener">Pay £5 · 1 number</a>
-        <a class="btn" id="pay10" href="#" target="_blank" rel="noopener">Pay £10 · 3 numbers</a>
-      </div>
-      <p class="soft" id="paynote">Keep this page open while you pay.</p>
+      <p class="soft">Keep this page open while you pay: you’ll need the same reference in step 2.</p>
     </li>
     <li>
       <h2>Send your details</h2>
@@ -162,8 +171,6 @@
 <script>
   // Fill these in before going live.
   const CONFIG = {
-    payLink5: "",          // bank payment link for £5
-    payLink10: "",         // bank payment link for £10 (can be the same link as above)
     formUrl: "",           // Google Form link
     formRefEntry: "",      // optional: the form's entry id for the reference question, e.g. "entry.123456789"
     closesAt: "2026-12-13T23:59:59+00:00"
@@ -193,8 +200,11 @@
     const a = document.getElementById(id);
     if (url) { a.href = url; } else { a.setAttribute("aria-disabled", "true"); a.textContent += " (link coming soon)"; }
   }
-  setLink("pay5", CONFIG.payLink5);
-  setLink("pay10", CONFIG.payLink10);
+  document.querySelectorAll("button.mini").forEach(b => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; }
+    catch (e) { b.textContent = "Copy failed"; }
+    setTimeout(() => { b.textContent = "Copy"; }, 2000);
+  }));
   let form = CONFIG.formUrl;
   if (form && CONFIG.formRefEntry) {
     form += (form.includes("?") ? "&" : "?") + "usp=pp_url&" + encodeURIComponent(CONFIG.formRefEntry) + "=" + encodeURIComponent(ref);
