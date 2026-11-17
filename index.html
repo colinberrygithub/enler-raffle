@@ -299,7 +299,6 @@
     if ((mobile.match(/\d/g) || []).length < 10) { err.textContent = "Please enter your mobile number."; return; }
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = "That email doesn’t look right."; return; }
     if (!paid) { err.textContent = "Please choose how much you paid."; return; }
-    if (!CONFIG.entryEndpoint) { err.textContent = "Entries open soon: sending isn’t switched on yet."; return; }
     err.textContent = "";
     const subject = "Enler Draw entry " + ref;
     const body = ["ENLER DRAW ENTRY", "Reference: " + ref, "Name: " + name, "Mobile: " + mobile,
@@ -307,7 +306,7 @@
     const btn = document.getElementById("send");
     btn.disabled = true; btn.textContent = "Sending…";
     let sent = false, why = "";
-    try {
+    if (CONFIG.entryEndpoint) try {
       const res = await fetch(CONFIG.entryEndpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ref, name, mobile, email, paid: paid.startsWith("£10") ? 10 : 5, website: f.get("website") || "" })
@@ -325,7 +324,7 @@
       document.getElementById("fallback").hidden = true;
       return;
     }
-    err.textContent = "We couldn’t send that automatically" + (why ? " (" + why + ")" : "") + ". Please email it instead, below.";
+    err.textContent = CONFIG.entryEndpoint ? "We couldn’t send that automatically" + (why ? " (" + why + ")" : "") + ". Please email it instead, below." : "Last step: email your entry to the club, below.";
     document.getElementById("mailtext").value = "Subject: " + subject + "\n\n" + body;
     const to = document.getElementById("toaddr");
     to.textContent = CONFIG.entryEmail;
