@@ -83,7 +83,11 @@
   label.opt { display: flex !important; align-items: center; gap: 10px; font-weight: 500 !important; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; cursor: pointer; }
   label.opt input { width: 20px; height: 20px; accent-color: var(--red); }
   .err { color: var(--red); font-weight: 600; min-height: 0; margin: 0; }
+  [hidden] { display: none !important; }
   .fallback { margin-top: 16px; }
+  .must, .sent { border: 3px solid var(--red); border-radius: 12px; padding: 14px 16px; margin: 14px 0; background: var(--bg); }
+  .must-head { font: 700 19px/1.2 'Oswald', sans-serif; text-transform: uppercase; color: var(--red); margin: 0 0 8px; }
+  .must .ref { margin: 4px 0 10px; }
   .fallback textarea { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 15px; }
   details { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 12px; }
   summary { cursor: pointer; font-weight: 700; }
@@ -123,7 +127,7 @@
     <p>Thanks to everyone who entered. The draw takes place on Monday 14 December.</p>
   </div>
 
-  <p class="warn">Complete all three steps to be entered. If you pay but don’t send your details, or send your details without paying, you are not in the draw.</p>
+  <p class="warn">Complete all three steps to be entered, and put your Enler reference on your bank payment. If you pay without the reference, pay but don’t send your details, or send your details without paying, you are not in the draw.</p>
 
   <ol class="steps">
     <li>
@@ -135,17 +139,20 @@
         <dt>Sort code</dt><dd><span class="mono">08-92-99</span> <button class="mini" type="button" data-copy="089299">Copy</button></dd>
         <dt>Account number</dt><dd><span class="mono">67373301</span> <button class="mini" type="button" data-copy="67373301">Copy</button></dd>
       </dl>
-      <p>Use this as your payment reference, exactly as shown, so we can match your payment to you:</p>
-      <div class="ref">
-        <code id="ref">ENLER-·····</code>
-        <button class="btn ghost" type="button" id="copy">Copy</button>
-        <span class="copied" id="copied" aria-live="polite"></span>
+      <div class="must">
+        <p class="must-head">You MUST put this in the payment reference</p>
+        <div class="ref">
+          <code id="ref">ENLER-·····</code>
+          <button class="btn ghost" type="button" id="copy">Copy</button>
+          <span class="copied" id="copied" aria-live="polite"></span>
+        </div>
+        <p>This is your personal Enler reference. It is how we tie your payment back to your entry. <b>A payment without it can’t be matched to you, and you won’t get your numbers.</b></p>
       </div>
-      <p class="soft">Keep this page open while you pay: you’ll need the same reference in step 2.</p>
+      <p class="soft">Keep this page open while you pay: the same reference is sent with your details in step 2.</p>
     </li>
     <li>
       <h2>Send your details</h2>
-      <p>Fill this in after you’ve paid. Tapping the button opens your email app with your entry written out: just press send.</p>
+      <p>Fill this in after you’ve paid. Your details and your Enler reference are sent straight to the club.</p>
       <form id="entry" class="entry" novalidate>
         <label>Full name<input name="name" autocomplete="name" required></label>
         <label>Mobile number<input name="mobile" type="tel" autocomplete="tel" inputmode="tel" required></label>
@@ -157,10 +164,14 @@
         </fieldset>
         <p class="soft">Payment reference: <b class="mono" id="ref2">ENLER-·····</b></p>
         <p class="err" id="err" role="alert"></p>
-        <div class="btns"><button class="btn" type="submit">Send my details</button></div>
+        <div class="btns"><button class="btn" type="submit" id="send">Send my details</button></div>
       </form>
+      <div class="sent" id="sent" role="status" hidden>
+        <p class="must-head">Details sent ✓</p>
+        <p>Thanks <span id="sentname"></span>. Your reference is <b class="mono" id="ref3"></b>. Once your payment with that reference shows in our bank, we’ll send your numbers.</p>
+      </div>
       <div class="fallback" id="fallback" hidden>
-        <p><b>Email app didn’t open?</b> Copy this and email it to <a id="toaddr" href="#"></a>:</p>
+        <p><b>Couldn’t send?</b> Copy this and email it to <a id="toaddr" href="#"></a>:</p>
         <textarea id="mailtext" rows="7" readonly></textarea>
         <div class="btns"><button class="btn ghost" type="button" id="copymail">Copy entry</button></div>
       </div>
@@ -223,9 +234,9 @@
 
   document.getElementById("ref2").textContent = ref;
 
-  // Step 2: build the entry email. The block format is what raffle.py import-mail reads back.
+  // Step 2: send the entry to the club's inbox via FormSubmit; raffle.py import-mail reads the email back.
   const entry = document.getElementById("entry");
-  entry.addEventListener("submit", ev => {
+  entry.addEventListener("submit", async ev => {
     ev.preventDefault();
     const f = new FormData(entry);
     const name = (f.get("name") || "").trim(), mobile = (f.get("mobile") || "").trim();
@@ -240,11 +251,36 @@
     const subject = "Enler Draw entry " + ref;
     const body = ["ENLER DRAW ENTRY", "Reference: " + ref, "Name: " + name, "Mobile: " + mobile,
                   "Email: " + (email || "-"), "Paid: " + paid, "END"].join("\n");
+    const btn = document.getElementById("send");
+    btn.disabled = true; btn.textContent = "Sending…";
+    const fields = { _subject: subject, _template: "box", Reference: ref, Name: name, Mobile: mobile };
+    if (email) fields.Email = email;
+    fields.Paid = paid;
+    let sent = false, why = "";
+    try {
+      const res = await fetch("https://formsubmit.co/ajax/" + CONFIG.entryEmail, {
+        method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(fields)
+      });
+      const out = await res.json().catch(() => ({}));
+      sent = res.ok && String(out.success) === "true";
+      why = out.message || "";
+    } catch (e) { why = "No connection."; }
+    btn.disabled = false; btn.textContent = "Send my details";
+    if (sent) {
+      document.getElementById("sentname").textContent = name.split(" ")[0];
+      document.getElementById("ref3").textContent = ref;
+      entry.hidden = true;
+      document.getElementById("sent").hidden = false;
+      document.getElementById("fallback").hidden = true;
+      return;
+    }
+    err.textContent = "We couldn’t send that automatically" + (why ? " (" + why + ")" : "") + ". Please email it instead, below.";
     document.getElementById("mailtext").value = "Subject: " + subject + "\n\n" + body;
     const to = document.getElementById("toaddr");
-    to.textContent = CONFIG.entryEmail; to.href = "mailto:" + CONFIG.entryEmail;
+    to.textContent = CONFIG.entryEmail;
+    to.href = "mailto:" + CONFIG.entryEmail + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
     document.getElementById("fallback").hidden = false;
-    location.href = "mailto:" + CONFIG.entryEmail + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
   });
   document.getElementById("copymail").addEventListener("click", async e => {
     try { await navigator.clipboard.writeText(document.getElementById("mailtext").value); e.target.textContent = "Copied"; }
